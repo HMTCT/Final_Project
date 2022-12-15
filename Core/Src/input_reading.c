@@ -8,8 +8,8 @@
 #include "main.h"
 
 //we aim to work with more than one buttons
-#define N0_OF_BUTTONS					3
-#define num_array						2
+#define N0_OF_BUTTONS					4
+#define num_array						3
 
 //timer interrupt duration is 10ms, so to pass 1 second,
 //we need to jump to the interrupt service routine 100 time
@@ -42,6 +42,10 @@ void button_reading(void){
 				break;
 			case 2:
 				debounceButtonBuffer1[i] = HAL_GPIO_ReadPin(A3_GPIO_Port, A3_Pin);
+				break;
+			case 3:
+				debounceButtonBuffer1[i] = HAL_GPIO_ReadPin(A0_GPIO_Port, A0_Pin);
+				break;
 			default:
 				break;
 		}

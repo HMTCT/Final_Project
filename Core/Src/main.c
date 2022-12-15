@@ -68,11 +68,12 @@ static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN 0 */
 void testIO (){
 	HAL_GPIO_WritePin(D2_GPIO_Port, D2_Pin,
-			HAL_GPIO_ReadPin(A0_GPIO_Port, A0_Pin)); //TURN OFF
-	HAL_GPIO_WritePin(D4_GPIO_Port, D4_Pin,
-				HAL_GPIO_ReadPin(A0_GPIO_Port, A1_Pin));
-	HAL_GPIO_WritePin(D6_GPIO_Port, D6_Pin,
-				HAL_GPIO_ReadPin(A0_GPIO_Port, A2_Pin));
+		HAL_GPIO_ReadPin(A0_GPIO_Port, A0_Pin)); //TURN OFF
+	//HAL_GPIO_WritePin(D4_GPIO_Port, D4_Pin,
+				//HAL_GPIO_ReadPin(A0_GPIO_Port, A1_Pin));
+	//HAL_GPIO_WritePin(D6_GPIO_Port, D6_Pin,
+				//HAL_GPIO_ReadPin(A0_GPIO_Port, A2_Pin));
+	//HAL_GPIO_TogglePin(D7_GPIO_Port, D7_Pin);
 }
 /* USER CODE END 0 */
 
@@ -83,7 +84,6 @@ void testIO (){
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -109,6 +109,8 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2);
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -121,6 +123,28 @@ int main(void)
 	  //fsm_for_7SEG();
 	  fsm_for_input_processing();
 	  fsm_blinking_mode();
+	  // Buzzer
+
+	    /*
+	     * __HAL_TIM_SetCompare (&htim3,TIM_CHANNEL_1,10);
+	    HAL_Delay(1000);
+	    __HAL_TIM_SetCompare (&htim3,TIM_CHANNEL_1,100);
+	    HAL_Delay(1000);
+
+	  	  */
+	  pedestrian_light();
+	  if (timer3_flag == 1) {
+			  if (buzzer){
+				  duty = duty + 10;
+				  if (duty > 40) {
+					  duty = 0;
+				  }
+				  __HAL_TIM_SetCompare(&htim3,TIM_CHANNEL_1, duty);
+			  }
+			  else  __HAL_TIM_SetCompare(&htim3,TIM_CHANNEL_1, 0);
+			  setTimer3(1000);
+		  }
+	  //HAL_Delay(1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -222,6 +246,7 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 0 */
 
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
   TIM_OC_InitTypeDef sConfigOC = {0};
 
@@ -231,9 +256,18 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 63;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 65535;
+  htim3.Init.Period = 999;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
   if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
   {
     Error_Handler();

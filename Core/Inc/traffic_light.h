@@ -13,6 +13,7 @@
 
 void traffic_light1();
 void traffic_light2();
+void pedestrian_light();
 
 void fsm_automatic_run1();
 
