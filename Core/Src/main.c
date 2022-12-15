@@ -115,6 +115,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  int buzzer_en2 = 0;
   while (1)
   {
 	  //testIO();
@@ -123,28 +124,37 @@ int main(void)
 	  //fsm_for_7SEG();
 	  fsm_for_input_processing();
 	  fsm_blinking_mode();
-	  // Buzzer
-
-	    /*
-	     * __HAL_TIM_SetCompare (&htim3,TIM_CHANNEL_1,10);
-	    HAL_Delay(1000);
-	    __HAL_TIM_SetCompare (&htim3,TIM_CHANNEL_1,100);
-	    HAL_Delay(1000);
-
-	  	  */
+	  // BUZZER
 	  pedestrian_light();
+	  if (status1 == AUTO_GREEN) {
+		if ((pedes_Duration == -1) || (pedes_Duration >= RED_DURATION) )
+			pedes_Duration = 0;
+	  } else pedes_Duration = -1;
 	  if (timer3_flag == 1) {
+			  int duty;
+			  int speedCycle;
+			  if ((pedes_Duration >= 0)&&(pedes_Duration < RED_DURATION*0.8)) {
+				duty = (int)((pedes_Duration*50) / (RED_DURATION*0.8));
+				speedCycle = 500 - (int)((pedes_Duration*470) / (RED_DURATION*0.8));
+			  } else { 			 // 80% of Red Light time has PASSED
+				duty = 50; 		 // max volume
+				speedCycle = 30; // fastest beep: 1/16 second beeping cycle
+			  }
 			  if (buzzer){
-				  duty = duty + 10;
-				  if (duty > 40) {
-					  duty = 0;
+				  if (buzzer_en2 == 0) {
+					  buzzer_en2 = 1;
+					  __HAL_TIM_SetCompare(&htim3,TIM_CHANNEL_1, 0);
 				  }
-				  __HAL_TIM_SetCompare(&htim3,TIM_CHANNEL_1, duty);
+				  else {
+					  __HAL_TIM_SetCompare(&htim3,TIM_CHANNEL_1, duty);
+					  buzzer_en2 = 0;
+				  }
 			  }
 			  else  __HAL_TIM_SetCompare(&htim3,TIM_CHANNEL_1, 0);
-			  setTimer3(1000);
-		  }
-	  //HAL_Delay(1000);
+			  setTimer3(speedCycle);
+			  pedes_Duration = pedes_Duration + speedCycle;
+	  }
+	  // END BUZZER
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

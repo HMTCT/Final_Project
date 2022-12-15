@@ -30,6 +30,12 @@ int timer5_flag = 0;
 int timer6_counter = 0;
 int timer6_flag = 0;
 
+int timer7_counter = 0;
+int timer7_flag = 0;
+
+int timer8_counter = 0;
+int timer8_flag = 0;
+
 int TIMER_CYCLE = 10;
 
 void setTimer0(int duration){
@@ -67,6 +73,16 @@ void setTimer6(int duration){
 	timer6_flag = 0;
 }
 
+void setTimer7(int duration){
+	timer7_counter = duration /TIMER_CYCLE;
+	timer7_flag = 0;
+}
+
+void setTimer8(int duration){
+	timer8_counter = duration /TIMER_CYCLE;
+	timer8_flag = 0;
+}
+
 void timer_run(){
 	if(timer0_counter > 0){
 		timer0_counter--;
@@ -101,6 +117,15 @@ void timer_run(){
 	if(timer6_counter > 0){
 		timer6_counter--;
 		if(timer6_counter == 0) timer6_flag = 1;
+	}
+
+	if(timer7_counter > 0){
+		timer7_counter--;
+		if(timer7_counter == 0) timer7_flag = 1;
+	}
+	if(timer8_counter > 0){
+		timer8_counter--;
+		if(timer8_counter == 0) timer7_flag = 1;
 	}
 }
 

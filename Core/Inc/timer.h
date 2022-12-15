@@ -37,6 +37,12 @@ void setTimer5(int duration);
 extern int timer6_flag;
 void setTimer6(int duration);
 
+//Timer for buzzer playback
+extern int timer7_flag;
+void setTimer7(int duration);
+
+extern int timer8_flag;
+void setTimer8(int duration);
 
 void timer_run();
 

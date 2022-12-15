@@ -37,7 +37,7 @@ extern int led_buffer[4];
 extern int countdown1;
 extern int countdown2;
 
-extern int duty;
+extern int pedes_Duration;
 
 extern int buzzer;
 

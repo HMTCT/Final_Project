@@ -45,11 +45,8 @@ void pedestrian_light(){
 		HAL_GPIO_WritePin (D7_GPIO_Port, D7_Pin, 0);
 		pedes_en = 0;
 		buzzer = 0;
-		duty = 0;
 		return;
-
 	}
-
 	switch (status1) {
 		case AUTO_GREEN:
 			HAL_GPIO_WritePin(D6_GPIO_Port, D6_Pin, 0);
@@ -60,13 +57,11 @@ void pedestrian_light(){
 			HAL_GPIO_WritePin(D6_GPIO_Port, D6_Pin, 1);
 			HAL_GPIO_WritePin(D7_GPIO_Port, D7_Pin, 0);
 			buzzer = 0;
-			duty = 0;
 			break;
 		case AUTO_RED:
 			HAL_GPIO_WritePin (D6_GPIO_Port, D6_Pin, 1);
 			HAL_GPIO_WritePin (D7_GPIO_Port, D7_Pin, 0);
 			buzzer = 0;
-			duty = 0;
 			break;
 		default:
 			break;
