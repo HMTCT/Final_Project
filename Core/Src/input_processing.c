@@ -7,6 +7,7 @@
 
 #include "main.h"
 #include "input_processing.h"
+#include "traffic_light.h"
 
 #define NO_OF_BUTTONS	4
 
@@ -25,7 +26,7 @@ void fsm_for_input_processing(void){
 				if(is_button_pressed(i)){
 					buttonState[i] = BUTTON_PRESSED;
 					update_processing(i);
-					if (i == 0 && MODE > 1)
+					if (i == A1_IS_PRESSED && MODE > 1)
 						setTimer4(10);
 				}
 				break;
@@ -47,7 +48,7 @@ void fsm_for_input_processing(void){
 
 				else{
 					//TODO
-					if (i != 0 && timer5_flag == 1){
+					if (i == A2_IS_PRESSED && timer5_flag == 1 && !MANUAL_MODE){
 						update_processing(i);
 						setTimer5(1000);
 					}
@@ -61,14 +62,17 @@ void fsm_for_input_processing(void){
 
 void update_processing(int BUTTON){
 	switch (BUTTON) {
-		case 0:
+		//A1 is pressed
+		case A1_IS_PRESSED:
 			MODE = (MODE + 1) % 5;
 			RED_DURATION = OLD_RED_DURATION;
 			YELLOW_DURATION = OLD_YELLOW_DURATION;
 			GREEN_DURATION = OLD_GREEN_DURATION;
+			MANUAL_MODE = 0;
 
 			if (MODE == INIT){
 				//MODE = INIT;
+				validate_traffic_light();
 				status1 = INIT;
 				status2 = INIT;
 			}
@@ -84,36 +88,73 @@ void update_processing(int BUTTON){
 				HAL_GPIO_WritePin(D5_GPIO_Port, D5_Pin, 0); //TURN OFF
 			}
 			break;
-		case 1:
+		//A2 is pressed
+		case A2_IS_PRESSED:
 			switch (MODE) {
-				case 2:
+				case AUTOMATIC:
+					MANUAL_MODE = 1;
+					setTimer7(TIMEOUT_MANUAL);
+					switch (status1) {
+						case AUTO_RED:
+							status1 = AUTO_GREEN;
+							break;
+						case AUTO_YELLOW:
+							status1 = AUTO_RED;
+							break;
+						case AUTO_GREEN:
+							status1 = AUTO_RED;
+						default:
+							break;
+					}
+					traffic_light1();
+				break;
+				case TUNING_RED:
 					RED_DURATION = (RED_DURATION + 1000) % 99000;
 					break;
-				case 3:
+				case TUNING_YELLOW:
 					YELLOW_DURATION = (YELLOW_DURATION + 1000) % 99000;
 					break;
-				case 4:
+				case TUNING_GREEN:
 					GREEN_DURATION = (GREEN_DURATION + 1000) % 99000;
 					break;
 				default:
 					break;
 			}
 			break;
-		case 2:
+		//A3 is pressed
+		case A3_IS_PRESSED:
 			switch (MODE) {
-				case 2:
+				case AUTOMATIC:
+					MANUAL_MODE = 1;
+					setTimer7(TIMEOUT_MANUAL);
+					switch (status2) {
+						case AUTO_RED:
+							status2 = AUTO_GREEN;
+							break;
+						case AUTO_YELLOW:
+							status2 = AUTO_RED;
+							break;
+						case AUTO_GREEN:
+							status2 = AUTO_RED;
+						default:
+							break;
+					}
+					traffic_light2();
+				break;
+				case TUNING_RED:
 					OLD_RED_DURATION = RED_DURATION;
 					break;
-				case 3:
+				case TUNING_YELLOW:
 					OLD_YELLOW_DURATION = YELLOW_DURATION;
 					break;
-				case 4:
+				case TUNING_GREEN:
 					OLD_GREEN_DURATION = GREEN_DURATION;
 				default:
 					break;
 			}
 			break;
-		case 3:
+		//A0 is pressed
+		case A0_IS_PRESSED:
 			//HAL_GPIO_TogglePin(D6_GPIO_Port, D6_Pin);
 			//HAL_GPIO_TogglePin(D7_GPIO_Port, D7_Pin);
 			pedes_en = 1;

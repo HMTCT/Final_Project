@@ -125,7 +125,7 @@ void timer_run(){
 	}
 	if(timer8_counter > 0){
 		timer8_counter--;
-		if(timer8_counter == 0) timer7_flag = 1;
+		if(timer8_counter == 0) timer8_flag = 1;
 	}
 }
 

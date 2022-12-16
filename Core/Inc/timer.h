@@ -21,7 +21,7 @@ void setTimer1(int duration);
 extern int timer2_flag;
 void setTimer2(int duration);
 
-//Timer for update led buffer
+//Timer for buzzer playback
 extern int timer3_flag;
 void setTimer3(int duration);
 
@@ -37,7 +37,7 @@ void setTimer5(int duration);
 extern int timer6_flag;
 void setTimer6(int duration);
 
-//Timer for buzzer playback
+//Timer for MANUAL MODE
 extern int timer7_flag;
 void setTimer7(int duration);
 

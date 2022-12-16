@@ -70,6 +70,9 @@ void pedestrian_light(){
 
 
 void fsm_automatic_run1(){
+	if (MANUAL_MODE)
+		return;
+
 	switch (status1) {
 		case INIT:
 			status1 = AUTO_RED;
@@ -112,6 +115,9 @@ void fsm_automatic_run1(){
 }
 
 void fsm_automatic_run2(){
+	if (MANUAL_MODE)
+		return;
+
 	switch (status2) {
 		case INIT:
 			status2 = AUTO_GREEN;
@@ -182,6 +188,32 @@ void fsm_blinking_mode(){
 				break;
 		}
 		setTimer4(250);
+	}
+}
+
+void validate_traffic_light(){
+	if (RED_DURATION < YELLOW_DURATION + GREEN_DURATION)
+		RED_DURATION = YELLOW_DURATION + GREEN_DURATION;
+
+	if (RED_DURATION > YELLOW_DURATION + GREEN_DURATION)
+		GREEN_DURATION += RED_DURATION - (YELLOW_DURATION + GREEN_DURATION);
+
+	if (!!MANUAL_MODE)
+		return;
+
+	switch (status1) {
+		case AUTO_RED:
+			status2 = AUTO_GREEN;
+			break;
+		case AUTO_YELLOW:
+			status1 = AUTO_RED;
+			status2 = AUTO_GREEN;
+			break;
+		case AUTO_GREEN:
+			status2 = AUTO_RED;
+			break;
+		default:
+			break;
 	}
 }
 

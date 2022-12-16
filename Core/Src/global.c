@@ -22,6 +22,8 @@ int countdown1 		= 0;
 int countdown2 		= 0;
 
 int buzzer			= 0;
-int pedes_Duration = 0;
+int pedes_Duration 	= 0;
 
 int pedes_en		= 0;
+
+int MANUAL_MODE		= 0;

@@ -115,15 +115,30 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
   int buzzer_en2 = 0;
   while (1)
   {
 	  //testIO();
+	  //Timeout of MANUAL MODE
+	  //continue the automatic mode
+	  if (MANUAL_MODE && timer7_flag){
+		  validate_traffic_light();
+	  	  setTimer1(10);
+	  	  setTimer2(10);
+	  	  MANUAL_MODE = 0;
+	  }
+
+	  //FSM of automatic mode
 	  fsm_automatic_run1();
 	  fsm_automatic_run2();
+
 	  //fsm_for_7SEG();
+
+	  //FSM of button
 	  fsm_for_input_processing();
 	  fsm_blinking_mode();
+
 	  // BUZZER
 	  pedestrian_light();
 	  if (status1 == AUTO_GREEN) {

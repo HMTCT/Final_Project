@@ -23,5 +23,7 @@ void turn_off_all_lights();
 
 void fsm_blinking_mode();
 
+void validate_traffic_light();
+
 
 #endif /* INC_TRAFFIC_LIGHT_H_ */
