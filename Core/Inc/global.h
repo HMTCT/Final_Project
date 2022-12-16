@@ -37,4 +37,10 @@ extern int led_buffer[4];
 extern int countdown1;
 extern int countdown2;
 
+extern int pedes_Duration;
+
+extern int buzzer;
+
+extern int pedes_en;
+
 #endif /* INC_GLOBAL_H_ */

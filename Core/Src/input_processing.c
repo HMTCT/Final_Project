@@ -8,7 +8,7 @@
 #include "main.h"
 #include "input_processing.h"
 
-#define NO_OF_BUTTONS	3
+#define NO_OF_BUTTONS	4
 
 enum ButtonState{BUTTON_RELEASED, BUTTON_PRESSED, BUTTON_PRESSED_MORE_THAN_1_SECOND} ;
 enum ButtonState buttonState[NO_OF_BUTTONS] = {BUTTON_RELEASED};
@@ -75,6 +75,13 @@ void update_processing(int BUTTON){
 			else{
 				status1 = STOP;
 				status2 = STOP;
+
+				//Turn off all leds before blinking
+				HAL_GPIO_WritePin(D2_GPIO_Port, D2_Pin, 0); //TURN OFF
+				HAL_GPIO_WritePin(D3_GPIO_Port, D3_Pin, 0); //TURN OFF
+
+				HAL_GPIO_WritePin(D4_GPIO_Port, D4_Pin, 0); //TURN OFF
+				HAL_GPIO_WritePin(D5_GPIO_Port, D5_Pin, 0); //TURN OFF
 			}
 			break;
 		case 1:
@@ -105,6 +112,13 @@ void update_processing(int BUTTON){
 				default:
 					break;
 			}
+			break;
+		case 3:
+			//HAL_GPIO_TogglePin(D6_GPIO_Port, D6_Pin);
+			//HAL_GPIO_TogglePin(D7_GPIO_Port, D7_Pin);
+			pedes_en = 1;
+			buzzer = 1;
+			setTimer6(20000);
 			break;
 		default:
 			break;

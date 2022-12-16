@@ -68,11 +68,12 @@ static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN 0 */
 void testIO (){
 	HAL_GPIO_WritePin(D2_GPIO_Port, D2_Pin,
-			HAL_GPIO_ReadPin(A0_GPIO_Port, A0_Pin)); //TURN OFF
-	HAL_GPIO_WritePin(D4_GPIO_Port, D4_Pin,
-				HAL_GPIO_ReadPin(A0_GPIO_Port, A1_Pin));
-	HAL_GPIO_WritePin(D6_GPIO_Port, D6_Pin,
-				HAL_GPIO_ReadPin(A0_GPIO_Port, A2_Pin));
+		HAL_GPIO_ReadPin(A0_GPIO_Port, A0_Pin)); //TURN OFF
+	//HAL_GPIO_WritePin(D4_GPIO_Port, D4_Pin,
+				//HAL_GPIO_ReadPin(A0_GPIO_Port, A1_Pin));
+	//HAL_GPIO_WritePin(D6_GPIO_Port, D6_Pin,
+				//HAL_GPIO_ReadPin(A0_GPIO_Port, A2_Pin));
+	//HAL_GPIO_TogglePin(D7_GPIO_Port, D7_Pin);
 }
 /* USER CODE END 0 */
 
@@ -83,7 +84,6 @@ void testIO (){
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -109,10 +109,13 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2);
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  int buzzer_en2 = 0;
   while (1)
   {
 	  //testIO();
@@ -121,6 +124,37 @@ int main(void)
 	  //fsm_for_7SEG();
 	  fsm_for_input_processing();
 	  fsm_blinking_mode();
+	  // BUZZER
+	  pedestrian_light();
+	  if (status1 == AUTO_GREEN) {
+		if ((pedes_Duration == -1) || (pedes_Duration >= RED_DURATION) )
+			pedes_Duration = 0;
+	  } else pedes_Duration = -1;
+	  if (timer3_flag == 1) {
+			  int duty;
+			  int speedCycle;
+			  if ((pedes_Duration >= 0)&&(pedes_Duration < RED_DURATION*0.8)) {
+				duty = (int)((pedes_Duration*50) / (RED_DURATION*0.8));
+				speedCycle = 500 - (int)((pedes_Duration*470) / (RED_DURATION*0.8));
+			  } else { 			 // 80% of Red Light time has PASSED
+				duty = 50; 		 // max volume
+				speedCycle = 30; // fastest beep: 1/16 second beeping cycle
+			  }
+			  if (buzzer){
+				  if (buzzer_en2 == 0) {
+					  buzzer_en2 = 1;
+					  __HAL_TIM_SetCompare(&htim3,TIM_CHANNEL_1, 0);
+				  }
+				  else {
+					  __HAL_TIM_SetCompare(&htim3,TIM_CHANNEL_1, duty);
+					  buzzer_en2 = 0;
+				  }
+			  }
+			  else  __HAL_TIM_SetCompare(&htim3,TIM_CHANNEL_1, 0);
+			  setTimer3(speedCycle);
+			  pedes_Duration = pedes_Duration + speedCycle;
+	  }
+	  // END BUZZER
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -222,6 +256,7 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 0 */
 
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
   TIM_OC_InitTypeDef sConfigOC = {0};
 
@@ -231,9 +266,18 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 63;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 65535;
+  htim3.Init.Period = 999;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
   if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
   {
     Error_Handler();

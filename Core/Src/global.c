@@ -20,3 +20,8 @@ int led_buffer[4] 	= {1, 2, 3, 4};
 
 int countdown1 		= 0;
 int countdown2 		= 0;
+
+int buzzer			= 0;
+int pedes_Duration = 0;
+
+int pedes_en		= 0;
