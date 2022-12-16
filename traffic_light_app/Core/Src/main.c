@@ -133,14 +133,15 @@ int main(void)
   while (1)
   {
 	  if (timer6_flag == 1){
-			  display7SEG_U1(countdown1);
+	 			  display7SEG_U1(countdown1);
 
-		  		setTimer6(1000);
-		  	}
-		  if (timer7_flag == 1){
-			  display7SEG_U2(countdown2);
-			  setTimer7(1000);
-		  		  	}
+	 		  		setTimer6(1000);
+	 		  	}
+	 		  if (timer7_flag == 1){
+	 		  			  display7SEG_U2(countdown2);
+
+	 		  		  		setTimer7(1000);
+	 		  		  	}
 	  fsm_automatic_run1();
 	  fsm_automatic_run2();
 	  fsm_for_7SEG();
