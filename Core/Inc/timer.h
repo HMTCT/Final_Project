@@ -41,6 +41,7 @@ void setTimer6(int duration);
 extern int timer7_flag;
 void setTimer7(int duration);
 
+//Timer for update led_buffer
 extern int timer8_flag;
 void setTimer8(int duration);
 

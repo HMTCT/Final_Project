@@ -41,10 +41,10 @@ void button_reading(void){
 				debounceButtonBuffer1[i] = HAL_GPIO_ReadPin(A1_GPIO_Port, A1_Pin);
 				break;
 			case 2:
-				debounceButtonBuffer1[i] = HAL_GPIO_ReadPin(A3_GPIO_Port, A2_Pin);
+				debounceButtonBuffer1[i] = HAL_GPIO_ReadPin(A2_GPIO_Port, A2_Pin);
 				break;
 			case 3:
-				debounceButtonBuffer1[i] = HAL_GPIO_ReadPin(A0_GPIO_Port, A3_Pin);
+				debounceButtonBuffer1[i] = HAL_GPIO_ReadPin(A3_GPIO_Port, A3_Pin);
 				break;
 			default:
 				break;

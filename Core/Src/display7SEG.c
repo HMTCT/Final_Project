@@ -79,6 +79,7 @@ void update7SEG(int index){
     }
 }
 
+*/
 void fsm_for_7SEG(){
 	switch (MODE) {
 		case INIT:
@@ -90,7 +91,7 @@ void fsm_for_7SEG(){
 			if (timer0_flag == 1){
 				update_led_buffer(1);
 				if (index_led >= MAX_LED) index_led = 0;
-				update7SEG(index_led++);
+				//update7SEG(index_led++);
 				setTimer0(250);
 			}
 			break;
@@ -98,7 +99,7 @@ void fsm_for_7SEG(){
 			if (timer0_flag == 1){
 				update_led_buffer(MODE);
 				if (index_led >= MAX_LED) index_led = 0;
-				update7SEG(index_led++);
+				//update7SEG(index_led++);
 				setTimer0(250);
 			}
 			break;
@@ -108,11 +109,11 @@ void fsm_for_7SEG(){
 void update_led_buffer(int mode){
 	switch (MODE) {
 		case INIT:
-			setTimer3(10);
+			setTimer8(10);
 			MODE = 1;
 			break;
 		case 1:
-			if (timer3_flag == 1){
+			if (timer8_flag == 1){
 				countdown1--;
 				countdown2--;
 
@@ -124,7 +125,7 @@ void update_led_buffer(int mode){
 				led_buffer[2] = countdown2 % 10;
 				led_buffer[3] = countdown2 / 10;
 
-				setTimer3(1000);
+				setTimer8(1000);
 			}
 			break;
 		case 2:
@@ -150,4 +151,3 @@ void update_led_buffer(int mode){
 	}
 }
 
-*/

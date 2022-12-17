@@ -102,7 +102,7 @@ void update_processing(int BUTTON){
 							status1 = AUTO_RED;
 							break;
 						case AUTO_GREEN:
-							status1 = AUTO_RED;
+							status1 = AUTO_YELLOW;
 						default:
 							break;
 					}
@@ -135,7 +135,7 @@ void update_processing(int BUTTON){
 							status2 = AUTO_RED;
 							break;
 						case AUTO_GREEN:
-							status2 = AUTO_RED;
+							status2 = AUTO_YELLOW;
 						default:
 							break;
 					}
@@ -159,7 +159,7 @@ void update_processing(int BUTTON){
 			//HAL_GPIO_TogglePin(D7_GPIO_Port, D7_Pin);
 			pedes_en = 1;
 			buzzer = 1;
-			setTimer6(20000);
+			setTimer6(2 * (RED_DURATION + YELLOW_DURATION + GREEN_DURATION));	//Set timeout for pedestrian light and buzzer
 			break;
 		default:
 			break;

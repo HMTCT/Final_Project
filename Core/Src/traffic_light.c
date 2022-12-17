@@ -40,7 +40,7 @@ void traffic_light2(){
 
 
 void pedestrian_light(){
-	if (!pedes_en || timer6_flag == 1){
+	if (!pedes_en || (timer6_flag == 1 && status1 == AUTO_RED) || MODE > 1 || MANUAL_MODE){
 		HAL_GPIO_WritePin(D6_GPIO_Port, D6_Pin, 0);
 		HAL_GPIO_WritePin (D7_GPIO_Port, D7_Pin, 0);
 		pedes_en = 0;
@@ -82,7 +82,6 @@ void fsm_automatic_run1(){
 			break;
 		case AUTO_RED:
 			if (timer1_flag == 1){
-				buzzer = 1;
 				traffic_light1();
 				status1 = AUTO_GREEN;
 				countdown1 = RED_DURATION / 1000;
@@ -198,7 +197,7 @@ void validate_traffic_light(){
 	if (RED_DURATION > YELLOW_DURATION + GREEN_DURATION)
 		GREEN_DURATION += RED_DURATION - (YELLOW_DURATION + GREEN_DURATION);
 
-	if (!!MANUAL_MODE)
+	if (!MANUAL_MODE)
 		return;
 
 	switch (status1) {

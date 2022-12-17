@@ -28,6 +28,7 @@
 #include "display7SEG.h"
 #include "traffic_light.h"
 #include "global.h"
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -75,6 +76,17 @@ void testIO (){
 				//HAL_GPIO_ReadPin(A0_GPIO_Port, A2_Pin));
 	//HAL_GPIO_TogglePin(D7_GPIO_Port, D7_Pin);
 }
+
+//USART PRINTING
+int tmp_buffer[4] = {1, 2, 3, 4};
+char str[1000];
+void display7SEG_U1(){
+	HAL_UART_Transmit(&huart2, (void*) str, sprintf(str, "!7SEG Road1:%d%d#\r\n",led_buffer[0], led_buffer[1]), 1000);
+
+}
+void display7SEG_U2(){
+	HAL_UART_Transmit(&huart2, (void*) str, sprintf(str, "!7SEG Road2:%d%d#\r\n -------------- \r\n",led_buffer[3], led_buffer[2]), 1000);
+}
 /* USER CODE END 0 */
 
 /**
@@ -115,7 +127,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-
+  int flag_print = 1;
   int buzzer_en2 = 0;
   while (1)
   {
@@ -133,7 +145,7 @@ int main(void)
 	  fsm_automatic_run1();
 	  fsm_automatic_run2();
 
-	  //fsm_for_7SEG();
+	  fsm_for_7SEG();
 
 	  //FSM of button
 	  fsm_for_input_processing();
@@ -168,6 +180,21 @@ int main(void)
 			  else  __HAL_TIM_SetCompare(&htim3,TIM_CHANNEL_1, 0);
 			  setTimer3(speedCycle);
 			  pedes_Duration = pedes_Duration + speedCycle;
+	  }
+	  //END BUZZER
+	  
+	  //USART Printing
+	  //Only print if there is a change of buffer
+	  for (int i = 0; i < 4; i++){
+		  if (tmp_buffer[i] != led_buffer[i]){
+			  tmp_buffer[i] = led_buffer[i];
+			  if (flag_print){
+				  display7SEG_U1();
+				  display7SEG_U2();
+				  flag_print = 0;
+			  }
+		  }
+		  if (i == 3) flag_print = 1;
 	  }
 	  // END BUZZER
     /* USER CODE END WHILE */
