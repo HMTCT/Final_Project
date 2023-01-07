@@ -8,6 +8,8 @@
 #include "main.h"
 #include "input_processing.h"
 #include "traffic_light.h"
+#include "scheduler.h"
+#include "global.h"
 
 #define NO_OF_BUTTONS	4
 
@@ -87,6 +89,20 @@ void update_processing(int BUTTON){
 				HAL_GPIO_WritePin(D4_GPIO_Port, D4_Pin, 0); //TURN OFF
 				HAL_GPIO_WritePin(D5_GPIO_Port, D5_Pin, 0); //TURN OFF
 			}
+
+			if (USE_SCHEDULER){
+				if (MODE == INIT){
+					SCH_Delete_Task(FSM_BLINKING_ID);
+					SCH_Add_Task(fsm_automatic_run1, 0, 0, FSM_AUTO1_ID);
+					SCH_Add_Task(fsm_automatic_run2, 1, 0, FSM_AUTO2_ID);
+					return;
+				}
+				if (MODE == TUNING_RED){
+					SCH_Delete_Task(FSM_AUTO1_ID);
+					SCH_Delete_Task(FSM_AUTO2_ID);
+					SCH_Add_Task(fsm_blinking_mode, 1, 25, FSM_BLINKING_ID);
+				}
+			}
 			break;
 		//A2 is pressed
 		case A2_IS_PRESSED:
@@ -94,6 +110,14 @@ void update_processing(int BUTTON){
 				case AUTOMATIC:
 					MANUAL_MODE = 1;
 					setTimer7(TIMEOUT_MANUAL);
+
+					if (USE_SCHEDULER){
+						SCH_Delete_Task(FSM_AUTO1_ID);
+						SCH_Delete_Task(FSM_AUTO2_ID);
+						SCH_Delete_Task(AUTO_AGAIN_ID);
+						SCH_Add_Task(automatic_after_manual, TIMEOUT_MANUAL / TICK_CYCLE, 0, AUTO_AGAIN_ID);
+					}
+
 					switch (status1) {
 						case AUTO_RED:
 							status1 = AUTO_GREEN;
@@ -107,7 +131,7 @@ void update_processing(int BUTTON){
 							break;
 					}
 					traffic_light1();
-				break;
+					break;
 				case TUNING_RED:
 					RED_DURATION = (RED_DURATION + 1000) % 99000;
 					break;
@@ -127,6 +151,14 @@ void update_processing(int BUTTON){
 				case AUTOMATIC:
 					MANUAL_MODE = 1;
 					setTimer7(TIMEOUT_MANUAL);
+
+					if (USE_SCHEDULER){
+						SCH_Delete_Task(FSM_AUTO1_ID);
+						SCH_Delete_Task(FSM_AUTO2_ID);
+						SCH_Delete_Task(AUTO_AGAIN_ID);
+						SCH_Add_Task(automatic_after_manual, TIMEOUT_MANUAL / TICK_CYCLE, 0, AUTO_AGAIN_ID);
+					}
+
 					switch (status2) {
 						case AUTO_RED:
 							status2 = AUTO_GREEN;
@@ -136,11 +168,12 @@ void update_processing(int BUTTON){
 							break;
 						case AUTO_GREEN:
 							status2 = AUTO_YELLOW;
+							break;
 						default:
 							break;
 					}
 					traffic_light2();
-				break;
+					break;
 				case TUNING_RED:
 					OLD_RED_DURATION = RED_DURATION;
 					break;
@@ -160,6 +193,12 @@ void update_processing(int BUTTON){
 			pedes_en = 1;
 			buzzer = 1;
 			setTimer6(2 * (RED_DURATION + YELLOW_DURATION + GREEN_DURATION));	//Set timeout for pedestrian light and buzzer
+			if (USE_SCHEDULER){
+				SCH_Delete_Task(PEDES_LIGHT_ID);
+				SCH_Delete_Task(BUZZER_ID);
+				SCH_Add_Task(pedestrian_light, 1, 0, PEDES_LIGHT_ID);
+				SCH_Add_Task(buzzer_active, 1, 0, BUZZER_ID);
+			}
 			break;
 		default:
 			break;

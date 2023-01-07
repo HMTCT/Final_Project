@@ -29,6 +29,7 @@
 #include "traffic_light.h"
 #include "global.h"
 #include <stdio.h>
+#include "scheduler.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -75,6 +76,51 @@ void testIO (){
 	//HAL_GPIO_WritePin(D6_GPIO_Port, D6_Pin,
 				//HAL_GPIO_ReadPin(A0_GPIO_Port, A2_Pin));
 	//HAL_GPIO_TogglePin(D7_GPIO_Port, D7_Pin);
+}
+
+void testSCH(){
+	HAL_GPIO_TogglePin(D2_GPIO_Port, D2_Pin);
+	//HAL_GPIO_WritePin (D2_GPIO_Port, D2_Pin, 0);
+	//HAL_GPIO_WritePin (D3_GPIO_Port, D3_Pin, 1);
+}
+
+int buzzer_en2 = 0;
+void buzzer_active(){
+	if (USE_SCHEDULER)
+		timer3_flag = 1;
+
+	if (status1 == AUTO_GREEN) {
+		if ((pedes_Duration == -1) || (pedes_Duration >= RED_DURATION) )
+			pedes_Duration = 0;
+	} else pedes_Duration = -1;
+
+	if (timer3_flag == 1) {
+		  int duty;
+		  int speedCycle;
+		  if ((pedes_Duration >= 0)&&(pedes_Duration < RED_DURATION*0.8)) {
+			duty = (int)((pedes_Duration*50) / (RED_DURATION*0.8));
+			speedCycle = 500 - (int)((pedes_Duration*470) / (RED_DURATION*0.8));
+		  } else { 			 // 80% of Red Light time has PASSED
+			duty = 50; 		 // max volume
+			speedCycle = 30; // fastest beep: 1/16 second beeping cycle
+		  }
+		  if (buzzer){
+			  if (buzzer_en2 == 0) {
+				  buzzer_en2 = 1;
+				  __HAL_TIM_SetCompare(&htim3,TIM_CHANNEL_1, 0);
+			  }
+			  else {
+				  __HAL_TIM_SetCompare(&htim3,TIM_CHANNEL_1, duty);
+				  buzzer_en2 = 0;
+			  }
+		  }
+		  else  __HAL_TIM_SetCompare(&htim3,TIM_CHANNEL_1, 0);
+		  setTimer3(speedCycle);
+		  pedes_Duration = pedes_Duration + speedCycle;
+
+		  if (USE_SCHEDULER)
+			  SCH_Add_Task(buzzer_active, speedCycle / TICK_CYCLE, 0, BUZZER_ID);
+	}
 }
 
 //USART PRINTING
@@ -128,63 +174,35 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   int flag_print = 1;
-  int buzzer_en2 = 0;
+  SCH_Init();
+
+  SCH_Add_Task(fsm_automatic_run1, 0, 0, FSM_AUTO1_ID);
+  SCH_Add_Task(fsm_automatic_run2, 1, 0, FSM_AUTO2_ID);
+  SCH_Add_Task(fsm_for_7SEG, 2, 250, FSM_7SEG_ID);
+
+  //SCH_Add_Task(testSCH, 10, 100);
   while (1)
   {
+	  SCH_Dispatch_Tasks();
 	  //testIO();
-	  //Timeout of MANUAL MODE
-	  //continue the automatic mode
-	  if (MANUAL_MODE && timer7_flag){
-		  validate_traffic_light();
-	  	  setTimer1(10);
-	  	  setTimer2(10);
-	  	  MANUAL_MODE = 0;
-	  }
+	  //testSCH();
+	  //HAL_Delay(1000);
 
 	  //FSM of automatic mode
-	  fsm_automatic_run1();
-	  fsm_automatic_run2();
+	  //fsm_automatic_run1();
+	  //fsm_automatic_run2();
 
-	  fsm_for_7SEG();
+	  //fsm_for_7SEG();
 
 	  //FSM of button
 	  fsm_for_input_processing();
-	  fsm_blinking_mode();
+	  //fsm_blinking_mode();
 
-	  // BUZZER
-	  pedestrian_light();
-	  if (status1 == AUTO_GREEN) {
-		if ((pedes_Duration == -1) || (pedes_Duration >= RED_DURATION) )
-			pedes_Duration = 0;
-	  } else pedes_Duration = -1;
-	  if (timer3_flag == 1) {
-			  int duty;
-			  int speedCycle;
-			  if ((pedes_Duration >= 0)&&(pedes_Duration < RED_DURATION*0.8)) {
-				duty = (int)((pedes_Duration*50) / (RED_DURATION*0.8));
-				speedCycle = 500 - (int)((pedes_Duration*470) / (RED_DURATION*0.8));
-			  } else { 			 // 80% of Red Light time has PASSED
-				duty = 50; 		 // max volume
-				speedCycle = 30; // fastest beep: 1/16 second beeping cycle
-			  }
-			  if (buzzer){
-				  if (buzzer_en2 == 0) {
-					  buzzer_en2 = 1;
-					  __HAL_TIM_SetCompare(&htim3,TIM_CHANNEL_1, 0);
-				  }
-				  else {
-					  __HAL_TIM_SetCompare(&htim3,TIM_CHANNEL_1, duty);
-					  buzzer_en2 = 0;
-				  }
-			  }
-			  else  __HAL_TIM_SetCompare(&htim3,TIM_CHANNEL_1, 0);
-			  setTimer3(speedCycle);
-			  pedes_Duration = pedes_Duration + speedCycle;
-	  }
-	  //END BUZZER
 	  
+
 	  //USART Printing
 	  //Only print if there is a change of buffer
+	  /*
 	  for (int i = 0; i < 4; i++){
 		  if (tmp_buffer[i] != led_buffer[i]){
 			  tmp_buffer[i] = led_buffer[i];
@@ -195,7 +213,7 @@ int main(void)
 			  }
 		  }
 		  if (i == 3) flag_print = 1;
-	  }
+	  }*/
 	  // END BUZZER
     /* USER CODE END WHILE */
 
@@ -429,6 +447,7 @@ static void MX_GPIO_Init(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef * htim ){
 	timer_run();
 	button_reading();
+	SCH_Update();
 }
 /* USER CODE END 4 */
 

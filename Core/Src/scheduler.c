@@ -1,0 +1,180 @@
+/*
+ * scheduler.c
+ *
+ *  Created on: Nov 11, 2022
+ *      Author: HMT
+ */
+
+#include "scheduler.h"
+#include "queue.h"
+#include "main.h"
+#include "global.h"
+#include "traffic_light.h"
+
+#define	QUEUE		1	//change this to 0 if using array structure
+
+sTasks SCH_tasks_G[SCH_MAX_TASKS];
+uint8_t current_index_task = 0;
+
+struct Queue* q = NULL;
+
+void SCH_Init(void){
+	current_index_task = 0;
+	q = createQueue();
+}
+
+void SCH_Add_Task ( void (*pFunction)() , uint32_t DELAY, uint32_t PERIOD, uint32_t taskID){
+	if(!QUEUE && current_index_task < SCH_MAX_TASKS){
+		//HAL_GPIO_WritePin (D2_GPIO_Port, D2_Pin, 1);
+		SCH_tasks_G[current_index_task].pTask = pFunction;
+		SCH_tasks_G[current_index_task].Delay = DELAY;
+		SCH_tasks_G[current_index_task].Period =  PERIOD;
+		SCH_tasks_G[current_index_task].RunMe = 0;
+		SCH_tasks_G[current_index_task].TaskID = current_index_task;
+
+		current_index_task++;
+		return;
+	}
+
+	if (q->size < SCH_MAX_TASKS){
+		sTasks task;
+		task.pTask = pFunction;
+		task.Delay = DELAY;
+		task.Period =  PERIOD;
+		task.RunMe = 0;
+		task.TaskID = taskID;
+
+		enQueue(q, task);
+		//HAL_GPIO_WritePin (D2_GPIO_Port, D2_Pin, 1);
+	}
+}
+
+void SCH_Update(void){
+	if (!QUEUE){
+		for (int i = 0; i < current_index_task; ++i) {
+			if (SCH_tasks_G[i].Delay > 0){
+				SCH_tasks_G[i].Delay--;
+			}
+			else{
+				SCH_tasks_G[i].Delay = SCH_tasks_G[i].Period;
+				SCH_tasks_G[i].RunMe += 1;
+			}
+		}
+		return;
+	}
+
+	if (q == NULL){
+		//HAL_GPIO_WritePin (D3_GPIO_Port, D3_Pin, 1);
+		return;
+	}
+
+	if (q->front == NULL)
+		return;
+
+	if (q->front->key.Delay > 0){
+		q->front->key.Delay--;
+		q->total_delay--;
+		//HAL_GPIO_WritePin (D3_GPIO_Port, D3_Pin, 1);
+	}
+
+	if (q->front->key.Delay == 0){
+		q->front->key.Delay = q->front->key.Period;
+		q->front->key.RunMe += 1;
+	}
+
+}
+
+void SCH_Dispatch_Tasks(void){
+	if (!QUEUE){
+		for (int i = 0; i < current_index_task; ++i){
+			if (SCH_tasks_G[i].RunMe > 0){
+				SCH_tasks_G[i].RunMe--;
+				(*SCH_tasks_G[i].pTask)();
+			}
+		}
+		return;
+	}
+
+	if (q->size == 0)
+		return;
+
+	if (q->front->key.RunMe > 0){
+		sTasks task = q->front->key;
+		deQueue(q);
+
+		task.RunMe--;
+		(*task.pTask)();
+
+		if (task.Period > 0)
+			enQueue(q, task);
+	}
+}
+void SCH_Delete_Task(uint32_t taskID){
+	if (!QUEUE){
+		if (taskID < 0 || taskID > current_index_task)
+			return;
+
+		SCH_tasks_G[taskID].pTask = 0x0000;
+		SCH_tasks_G[taskID].Delay = 0;
+		SCH_tasks_G[taskID].Period = 0;
+		SCH_tasks_G[taskID].RunMe = 0;
+
+		for (int i = taskID; i < current_index_task - 1; ++i) {
+			SCH_tasks_G[i] = SCH_tasks_G[i + 1];
+		}
+
+		current_index_task--;
+		return;
+	}
+
+	if (q->size == 0)
+		return;
+
+	struct QNode* prev = NULL;
+	struct QNode* it = q->front;
+	int flag = 0;
+
+	while (it){
+		if (it->key.TaskID == taskID){
+			flag = 1;
+			break;
+		}
+		prev = it;
+		it = it->next;
+	}
+
+	if (!flag)
+		return;
+
+	if (prev)
+		prev->next = it->next;
+
+	else{
+		if (q->size > 1)
+			q->front->next->key.Delay += q->front->key.Delay;
+		return deQueue(q);
+	}
+
+	q->size--;
+
+	if (it == q->rear){
+		q->rear = prev;
+		q->total_delay -= it->key.Delay;
+		q->rear->next = NULL;
+	}
+	else it->next->key.Delay += it->key.Delay;
+
+	free(it);
+}
+
+void SCH_Delete_All(){
+	q->size = 0;
+	q->total_delay = 0;
+	struct QNode* tmp = NULL;
+	while (q->front){
+		tmp = q->front;
+		q->front = q->front->next;
+		free(tmp);
+	}
+	q->rear = NULL;
+}

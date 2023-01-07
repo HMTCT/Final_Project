@@ -28,7 +28,7 @@
 #define A2_IS_PRESSED	2
 #define A3_IS_PRESSED	3
 
-#define TIMEOUT_MANUAL	10000
+#define TIMEOUT_MANUAL	3000
 
 extern int status1;
 extern int status2;
@@ -50,5 +50,9 @@ extern int pedes_Duration;
 extern int buzzer;
 
 extern int pedes_en;
+
+extern int USE_SCHEDULER;
+extern int auto1_period;
+extern int auto2_period;
 
 #endif /* INC_GLOBAL_H_ */

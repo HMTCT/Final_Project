@@ -7,6 +7,7 @@
 
 #include "main.h"
 #include "traffic_light.h"
+#include "scheduler.h"
 
 void traffic_light1(){
 	if (status1 == AUTO_GREEN){		//green turns on
@@ -40,7 +41,7 @@ void traffic_light2(){
 
 
 void pedestrian_light(){
-	if (!pedes_en || (timer6_flag == 1 && status1 == AUTO_RED) || MODE > 1 || MANUAL_MODE){
+	if (!pedes_en || (timer6_flag == 1 && status1 == AUTO_RED) || MODE != AUTOMATIC || MANUAL_MODE){
 		HAL_GPIO_WritePin(D6_GPIO_Port, D6_Pin, 0);
 		HAL_GPIO_WritePin (D7_GPIO_Port, D7_Pin, 0);
 		pedes_en = 0;
@@ -50,7 +51,7 @@ void pedestrian_light(){
 	switch (status1) {
 		case AUTO_GREEN:
 			HAL_GPIO_WritePin(D6_GPIO_Port, D6_Pin, 0);
-			HAL_GPIO_WritePin (D7_GPIO_Port, D7_Pin, 1);
+			HAL_GPIO_WritePin(D7_GPIO_Port, D7_Pin, 1);
 			buzzer = 1;
 			break;
 		case AUTO_YELLOW:
@@ -59,12 +60,15 @@ void pedestrian_light(){
 			buzzer = 0;
 			break;
 		case AUTO_RED:
-			HAL_GPIO_WritePin (D6_GPIO_Port, D6_Pin, 1);
-			HAL_GPIO_WritePin (D7_GPIO_Port, D7_Pin, 0);
+			HAL_GPIO_WritePin(D6_GPIO_Port, D6_Pin, 1);
+			HAL_GPIO_WritePin(D7_GPIO_Port, D7_Pin, 0);
 			buzzer = 0;
 			break;
 		default:
 			break;
+	}
+	if (USE_SCHEDULER){
+		SCH_Add_Task(pedestrian_light, countdown1, 0, PEDES_LIGHT_ID);
 	}
 }
 
@@ -73,12 +77,16 @@ void fsm_automatic_run1(){
 	if (MANUAL_MODE)
 		return;
 
+	if (USE_SCHEDULER)
+		timer1_flag = 1;
+
 	switch (status1) {
 		case INIT:
 			status1 = AUTO_RED;
 			setTimer1(10);
 			setTimer3(10);
-			MODE = 1;
+			MODE = AUTOMATIC;
+			auto1_period = 1;
 			break;
 		case AUTO_RED:
 			if (timer1_flag == 1){
@@ -86,6 +94,7 @@ void fsm_automatic_run1(){
 				status1 = AUTO_GREEN;
 				countdown1 = RED_DURATION / 1000;
 				setTimer1(RED_DURATION);
+				auto1_period = RED_DURATION;
 			}
 			break;
 		case AUTO_GREEN:
@@ -95,6 +104,7 @@ void fsm_automatic_run1(){
 				countdown1 = GREEN_DURATION / 1000;
 				setTimer1(GREEN_DURATION);
 				buzzer = 0;
+				auto1_period = GREEN_DURATION;
 			}
 			break;
 		case AUTO_YELLOW:
@@ -104,6 +114,7 @@ void fsm_automatic_run1(){
 				countdown1 = YELLOW_DURATION / 1000;
 				setTimer1(YELLOW_DURATION);
 				buzzer = 0;
+				auto1_period = YELLOW_DURATION;
 			}
 			break;
 		case STOP:
@@ -111,16 +122,22 @@ void fsm_automatic_run1(){
 		default:
 			break;
 	}
+	if (USE_SCHEDULER)
+		SCH_Add_Task(fsm_automatic_run1, auto1_period / TICK_CYCLE, 0, FSM_AUTO1_ID);
 }
 
 void fsm_automatic_run2(){
 	if (MANUAL_MODE)
 		return;
 
+	if (USE_SCHEDULER)
+		timer2_flag = 1;
+
 	switch (status2) {
 		case INIT:
 			status2 = AUTO_GREEN;
 			setTimer2(10);
+			auto2_period = 1;
 			break;
 		case AUTO_RED:
 			if (timer2_flag == 1){
@@ -128,6 +145,7 @@ void fsm_automatic_run2(){
 				status2 = AUTO_GREEN;
 				countdown2 = RED_DURATION / 1000;
 				setTimer2(RED_DURATION);
+				auto2_period = RED_DURATION;
 			}
 			break;
 		case AUTO_GREEN:
@@ -136,6 +154,7 @@ void fsm_automatic_run2(){
 				status2 = AUTO_YELLOW;
 				countdown2 = GREEN_DURATION / 1000;
 				setTimer2(GREEN_DURATION);
+				auto2_period = GREEN_DURATION;
 			}
 			break;
 		case AUTO_YELLOW:
@@ -144,6 +163,7 @@ void fsm_automatic_run2(){
 				status2 = AUTO_RED;
 				countdown2 =  YELLOW_DURATION / 1000;
 				setTimer2(YELLOW_DURATION);
+				auto2_period = YELLOW_DURATION;
 			}
 			break;
 		case STOP:
@@ -151,6 +171,8 @@ void fsm_automatic_run2(){
 		default:
 			break;
 	}
+	if (USE_SCHEDULER)
+			SCH_Add_Task(fsm_automatic_run2, auto2_period / TICK_CYCLE, 0, FSM_AUTO2_ID);
 }
 
 /*
@@ -164,6 +186,9 @@ void turn_off_all_lights(){
 */
 
 void fsm_blinking_mode(){
+	if (USE_SCHEDULER)
+		timer4_flag = 1;
+
 	if (timer4_flag == 1){
 		switch (MODE) {
 			case 2:
@@ -216,3 +241,21 @@ void validate_traffic_light(){
 	}
 }
 
+//Timeout of MANUAL MODE
+//continue the automatic mode
+void automatic_after_manual(){
+	if (USE_SCHEDULER)
+		timer7_flag = 1;
+
+	if (MANUAL_MODE && timer7_flag){
+		validate_traffic_light();
+		setTimer1(10);
+		setTimer2(10);
+		MANUAL_MODE = 0;
+
+		if (USE_SCHEDULER){
+			SCH_Add_Task(fsm_automatic_run1, 0, 0, FSM_AUTO1_ID);
+			SCH_Add_Task(fsm_automatic_run2, 1, 0, FSM_AUTO2_ID);
+		}
+	}
+}
